@@ -24,7 +24,9 @@ def get_model(config):
     model = VQVAE(
         encoder_configs=[VAEConfig(**conf) for conf in config.encoder_configs],
         decoder_configs=[VAEConfig(**conf) for conf in config.decoder_configs],
-        vq_configs=[VectorQuantizerConfig(**conf) for conf in config.vq_configs],
+        vq_configs=[
+            VectorQuantizerConfig(**conf) for conf in config.vq_configs
+        ],
     )
     return model
 
@@ -72,21 +74,28 @@ def evaluate_model(rng_key, state, val_iter):
     return float(loss)
 
 
-def train(rng_key, model, config, train_iter, val_iter, model_id):
+def train(rng_key, model, config, train_iter, val_iter, test_iter, model_id):
     logging.info("get train state and checkpointer")
     state_key, rng_key = jr.split(rng_key)
-    state = new_train_state(state_key, model, next(iter(train_iter)), config.optimizer)
+    state = new_train_state(
+        state_key, model, next(iter(train_iter)), config.optimizer
+    )
     ckpt_save_fn, ckpt_restore_fn, _ = get_checkpointer_fns(
-        os.path.join(FLAGS.workdir, "checkpoints", model_id), config.training.checkpoints, config.model.to_dict()
+        os.path.join(FLAGS.workdir, "checkpoints", model_id),
+        config.training.checkpoints,
+        config.model.to_dict(),
     )
 
     logging.info("training model")
     early_stop = EarlyStopping(
-        patience=config.training.early_stopping.n_patience, min_delta=config.training.early_stopping.min_delta
+        patience=config.training.early_stopping.n_patience,
+        min_delta=config.training.early_stopping.min_delta,
     )
     epoch_key, rng_key = jr.split(rng_key)
     for epoch in range(1, config.training.n_epochs + 1):
-        train_key, val_key, sample_key = jr.split(jr.fold_in(epoch_key, epoch), 3)
+        train_key, val_key, sample_key = jr.split(
+            jr.fold_in(epoch_key, epoch), 3
+        )
         train_loss, state = train_epoch(train_key, state, train_iter)
         val_loss = evaluate_model(val_key, state, val_iter)
         logging.info(f"loss at epoch {epoch}: {train_loss}/{val_loss}")
@@ -98,8 +107,8 @@ def train(rng_key, model, config, train_iter, val_iter, model_id):
         early_stop.update(val_loss)
         if FLAGS.usewand:
             wandb.log({"loss": train_loss, "val_loss": val_loss})
-        # if FLAGS.usewand and epoch % 20 == 0:
-        log_images(sample_key, state, val_iter, epoch, model_id)
+        if FLAGS.usewand and epoch % 10 == 0:
+            log_images(sample_key, state, test_iter, epoch, model_id)
         if early_stop.should_stop:
             logging.info("early stopping criterion found. stopping training")
             break
@@ -117,7 +126,11 @@ def reconstruct(rng_key, state, batch):
 
 def plot_figures(real_data, reconstructed_data):
     def convert_batch_to_image_grid(image_batch):
-        reshaped = image_batch.reshape(4, 8, 32, 32, 3).transpose([0, 2, 1, 3, 4]).reshape(4 * 32, 8 * 32, 3)
+        reshaped = (
+            image_batch.reshape(4, 8, 32, 32, 3)
+            .transpose([0, 2, 1, 3, 4])
+            .reshape(4 * 32, 8 * 32, 3)
+        )
         return reshaped + 0.5
 
     fig = plt.figure(figsize=(16, 4))
@@ -127,20 +140,24 @@ def plot_figures(real_data, reconstructed_data):
     plt.axis("off")
     plt.tight_layout()
     ax = fig.add_subplot(1, 2, 2)
-    ax.imshow(convert_batch_to_image_grid(reconstructed_data), interpolation="nearest")
+    ax.imshow(
+        convert_batch_to_image_grid(reconstructed_data), interpolation="nearest"
+    )
     ax.set_title("validation data reconstructions")
     plt.axis("off")
     plt.tight_layout()
     return fig
 
 
-def log_images(rng_key, state, val_iter, step, model_id):
-    batch = next(iter(val_iter))
+def log_images(rng_key, state, test_iter, step, model_id):
+    batch = next(iter(test_iter))
     outputs_hat = reconstruct(rng_key, state, batch)
     fig = plot_figures(batch, outputs_hat)
     if FLAGS.usewand:
         wandb.log({"images": wandb.Image(fig)}, step=step)
-    fl = os.path.join(FLAGS.workdir, "figures", f"{model_id}-reconstructed_images-{step}.png")
+    fl = os.path.join(
+        FLAGS.workdir, "figures", f"{model_id}-reconstructed_images-{step}.png"
+    )
     fig.savefig(fl)
 
 
@@ -166,15 +183,23 @@ def main(argv):
 
     rng_key = jr.PRNGKey(FLAGS.config.rng_key)
     data_key, train_key, rng_key = jr.split(rng_key, 3)
-    train_iter, val_iter = data_loaders(
+    train_iter, val_iter, test_iter = data_loaders(
         rng_key=data_key,
         config=FLAGS.config.training,
-        split=["train[:90%]", "train[90%:]"],
+        split=["train[:90%]", "train[90%:]", "test[:10%]"],
         outpath=os.path.join(FLAGS.workdir, "data"),
     )
 
     model = get_model(FLAGS.config.model)
-    train(train_key, model, FLAGS.config, train_iter, val_iter, model_id)
+    train(
+        train_key,
+        model,
+        FLAGS.config,
+        train_iter,
+        val_iter,
+        test_iter,
+        model_id,
+    )
 
 
 if __name__ == "__main__":

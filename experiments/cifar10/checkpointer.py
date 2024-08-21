@@ -42,7 +42,9 @@ def new_train_state(rng_key, model, init_batch, config):
 
     tx = optax.adamw(lr, weight_decay=config.params.weight_decay)
     if config.params.do_gradient_clipping:
-        tx = optax.chain(optax.clip_by_global_norm(config.params.gradient_clipping), tx)
+        tx = optax.chain(
+            optax.clip_by_global_norm(config.params.gradient_clipping), tx
+        )
 
     return TrainState.create(
         apply_fn=model.apply,
@@ -74,12 +76,16 @@ def get_checkpointer_fns(outfolder, config, model_config):
 
     def save_fn(epoch, ckpt, metrics):
         save_args = orbax_utils.save_args_from_target(ckpt)
-        checkpoint_manager.save(epoch, ckpt, save_kwargs={"save_args": save_args}, metrics=metrics)
+        checkpoint_manager.save(
+            epoch, ckpt, save_kwargs={"save_args": save_args}, metrics=metrics
+        )
 
     def restore_fn():
         return checkpoint_manager.restore(checkpoint_manager.best_step())
 
     def path_best_ckpt_fn():
-        return get_save_directory(checkpoint_manager.best_step(), checkpoint_manager.directory)
+        return get_save_directory(
+            checkpoint_manager.best_step(), checkpoint_manager.directory
+        )
 
     return save_fn, restore_fn, path_best_ckpt_fn

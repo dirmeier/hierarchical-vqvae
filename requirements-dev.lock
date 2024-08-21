@@ -28,6 +28,8 @@ astunparse==1.6.3
 certifi==2024.7.4
     # via requests
     # via sentry-sdk
+cfgv==3.4.0
+    # via pre-commit
 charset-normalizer==3.3.2
     # via requests
 chex==0.1.86
@@ -45,6 +47,8 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via tfp-nightly
+distlib==0.3.8
+    # via virtualenv
 dm-haiku==0.0.12
     # via vqvae
 dm-tree==0.1.8
@@ -60,6 +64,8 @@ etils==1.9.2
     # via optax
     # via orbax-checkpoint
     # via tensorflow-datasets
+filelock==3.15.4
+    # via virtualenv
 flatbuffers==24.3.25
     # via tensorflow
 flax==0.8.5
@@ -86,6 +92,8 @@ grpcio==1.65.5
 h5py==3.11.0
     # via keras
     # via tensorflow
+identify==2.6.0
+    # via pre-commit
 idna==3.7
     # via requests
 immutabledict==4.2.0
@@ -138,6 +146,8 @@ namex==0.0.8
     # via keras
 nest-asyncio==1.6.0
     # via orbax-checkpoint
+nodeenv==1.9.1
+    # via pre-commit
 numpy==1.26.4
     # via chex
     # via contourpy
@@ -179,7 +189,9 @@ packaging==24.1
 pillow==10.4.0
     # via matplotlib
 platformdirs==4.2.2
+    # via virtualenv
     # via wandb
+pre-commit==3.8.0
 promise==2.3
     # via tensorflow-datasets
 protobuf==4.25.4
@@ -205,6 +217,7 @@ pyyaml==6.0.2
     # via flax
     # via ml-collections
     # via orbax-checkpoint
+    # via pre-commit
     # via wandb
 requests==2.32.3
     # via tensorflow
@@ -278,6 +291,8 @@ typing-extensions==4.12.2
 urllib3==2.2.2
     # via requests
     # via sentry-sdk
+virtualenv==20.26.3
+    # via pre-commit
 wandb==0.17.7
 werkzeug==3.0.3
     # via tensorboard

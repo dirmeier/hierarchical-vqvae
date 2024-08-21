@@ -15,19 +15,19 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 requires-python = ">=3.11"
-dynamic = ["version"]
 dependencies = [
     "jax>=0.4.30",
     "jaxlib>=0.4.30",
     "flax>=0.8.5",
     "optax>=0.2.3",
-    "ml-collections>=0.1.1",
+    "ml_collections>=0.1.1",
     "tfp-nightly[jax]>=0.25.0.dev20240819",
     "einops>=0.8.0",
     "dm-haiku>=0.0.12",
     "tensorflow>=2.17.0",
     "tensorflow-datasets>=4.9.6",
 ]
+dynamic = ["version"]
 
 [tool.setuptools]
 packages = ["vqvae"]
@@ -40,10 +40,14 @@ managed = true
 dev-dependencies = [
     "wandb>=0.17.7",
     "matplotlib>=3.9.2",
+    "pre-commit>=3.8.0",
 ]
 
+[tool.bandit]
+skips = ["B101"]
+
 [tool.ruff]
-line-length = 120
+line-length = 80
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]

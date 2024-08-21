@@ -9,20 +9,46 @@ def get_config():
     config = ml_collections.ConfigDict()
     config.rng_key = 1
     config.model = new_dict(
-        encoder_configs=[new_dict(n_channels=32, n_out_channels=32, channel_multipliers=(1, 2), n_resnet_blocks=2)] * 3,
+        encoder_configs=[
+            new_dict(
+                n_channels=128,
+                n_out_channels=128,
+                n_layers=2,
+                model_block_name="convnext",
+            )
+        ]
+        * 3,
         decoder_configs=[
-            new_dict(n_channels=32, n_out_channels=32, channel_multipliers=(1, 2), n_resnet_blocks=2),
-            new_dict(n_channels=32, n_out_channels=32, channel_multipliers=(1, 2), n_resnet_blocks=2),
-            new_dict(n_channels=32, n_out_channels=3, channel_multipliers=(1, 2), n_resnet_blocks=2),
+            new_dict(
+                n_channels=128,
+                n_out_channels=128,
+                n_layers=2,
+                model_block_name="convnext",
+            ),
+            new_dict(
+                n_channels=128,
+                n_out_channels=128,
+                n_layers=2,
+                model_block_name="convnext",
+            ),
+            new_dict(
+                n_channels=128,
+                n_out_channels=3,
+                n_layers=2,
+                model_block_name="convnext",
+            ),
         ],
-        vq_configs=[new_dict(n_embedding=32, embedding_dim=32, commitment_cost=0.1)] * 3,
+        vq_configs=[
+            new_dict(embedding_dim=64, n_embedding=512, commitment_cost=0.25)
+        ]
+        * 3,
     )
 
     config.training = new_dict(
-        n_epochs=1,
+        n_epochs=50,
         batch_size=32,
-        buffer_size=64 * 5,
-        prefetch_size=128,
+        buffer_size=32 * 100,
+        prefetch_size=32 * 4,
         do_reshuffle=True,
         early_stopping=new_dict(n_patience=20, min_delta=0.001),
         checkpoints=new_dict(
@@ -35,11 +61,11 @@ def get_config():
         name="adamw",
         params=new_dict(
             learning_rate=1e-3,
-            weight_decay=1e-4,
-            do_warmup=False,
-            warmup_steps=200_000,
+            weight_decay=1e-6,
+            do_warmup=True,
+            warmup_steps=2_000,
             do_decay=True,
-            decay_steps=500_000,
+            decay_steps=100_000,
             end_learning_rate=1e-5,
             do_gradient_clipping=True,
             gradient_clipping=1.0,
